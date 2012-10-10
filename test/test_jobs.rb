@@ -382,3 +382,12 @@ class PerExceptionClassRetryCountArrayJob
     raise RuntimeError, 'I always fail with a RuntimeError'
   end
 end
+
+class RetryKilledJob
+  extend Resque::Plugins::Retry
+  @queue = :testing
+
+  def self.perform(*args)
+    Process.kill("KILL", Process.pid)
+  end
+end
