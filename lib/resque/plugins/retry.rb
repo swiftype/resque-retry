@@ -128,7 +128,7 @@ module Resque
 
       # @abstract
       # Number of seconds to sleep after job is requeued
-      # 
+      #
       # @return [Number] number of seconds to sleep
       #
       # @api public
@@ -261,7 +261,7 @@ module Resque
         # if the retry limit was reached, dont bother checking anything else.
         if retry_limit_reached?
           log_message 'retry limit reached', args, exception
-          return false 
+          return false
         end
 
         # We always want to retry if the exception matches.
@@ -344,7 +344,7 @@ module Resque
 
         # remember that this job is now being retried. before_perform_retry will increment
         # this so it represents the retry count, and MultipleWithRetrySuppression uses
-        # the existence of this to determine if the job should be sent to the 
+        # the existence of this to determine if the job should be sent to the
         # parent failure backend (e.g. failed queue) or not.  Removing this means
         # jobs that fail before ::perform will be both retried and sent to the failed queue.
         Resque.redis.setnx(redis_retry_key(*args), -1)
@@ -353,8 +353,10 @@ module Resque
 
         if temp_retry_delay <= 0
           # If the delay is 0, no point passing it through the scheduler
+          Resque.logger.warn("Job failed with #{exception} error and we are going to retry it by putting it back to the queue now.")
           Resque.enqueue(retry_in_queue, *retry_args)
         else
+          Resque.logger.warn("Job failed with #{exception} error and we are going to retry it in #{temp_retry_delay} seconds.")
           Resque.enqueue_in(temp_retry_delay, retry_in_queue, *retry_args)
         end
 
@@ -423,6 +425,7 @@ module Resque
           try_again(exception, *args)
         else
           log_message 'retry criteria not sufficient for retry', args, exception
+          Resque.logger.error("The job has failed with #{exception} error, but we are not going to retry it.")
           clean_retry_key(*args)
         end
 
