@@ -280,8 +280,10 @@ module Resque
         retry_in_queue = retry_job_delegate ? retry_job_delegate : self
         if temp_retry_delay <= 0
           # If the delay is 0, no point passing it through the scheduler
+          Resque.logger.warn("Job failed with #{exception} error and we are going to retry it by putting it back to the queue now.")
           Resque.enqueue(retry_in_queue, *args_for_retry(*args))
         else
+          Resque.logger.warn("Job failed with #{exception} error and we are going to retry it in #{temp_retry_delay} seconds.")
           Resque.enqueue_in(temp_retry_delay, retry_in_queue, *args_for_retry(*args))
         end
 
@@ -337,6 +339,7 @@ module Resque
         if retry_criteria_valid?(exception, *args)
           try_again(exception, *args)
         else
+          Resque.logger.error("The job has failed with #{exception} error, but we are not going to retry it.")
           clean_retry_key(*args)
         end
 
