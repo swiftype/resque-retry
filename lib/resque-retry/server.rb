@@ -75,6 +75,8 @@ module ResqueRetry
       private
       def get_class(job)
         Resque::Job.new(nil, nil).constantize(job['class'])
+      rescue NameError
+        job['class']
       end
     end
 
